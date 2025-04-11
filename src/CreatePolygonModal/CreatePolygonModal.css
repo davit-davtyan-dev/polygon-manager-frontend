@@ -1,0 +1,49 @@
+.create-modal-actions-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.save-polygon-button {
+  background-color: #80b577;
+}
+
+.polygon-name-input {
+  padding-inline: 8px;
+  margin-inline: -8px;
+  border-radius: 8px;
+  height: 40px;
+  width: 100%;
+  font-size: 16px;
+}
+
+.create-points-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.points {
+  overflow: auto;
+}
+
+.point-editor {
+  display: flex;
+  margin-bottom: 4px;
+  gap: 4px;
+}
+
+.point-editor input {
+  width: 48px;
+  border-radius: 4px;
+}
+
+.point-editor button {
+  padding: 2px 4px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.add-point-button {
+  padding: 6px;
+}

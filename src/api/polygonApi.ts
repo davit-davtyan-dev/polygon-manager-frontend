@@ -1,20 +1,22 @@
 import { Polygon } from "../types";
+import { handleResponse } from "./helpers";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export async function createPolygonApi(data: Polygon) {
-  const reponse = await fetch(`${API_URL}/polygon`, {
+export async function createPolygonApi(data: Omit<Polygon, "_id">) {
+  const response = await fetch(`${API_URL}/polygon`, {
     method: "post",
     body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
   });
 
-  return reponse.json() as Promise<Polygon>;
+  return handleResponse<Polygon>(response);
 }
 
 export async function fetchPolygonsApi() {
-  const reponse = await fetch(`${API_URL}/polygon`);
+  const response = await fetch(`${API_URL}/polygon`);
 
-  return reponse.json() as Promise<Array<Polygon>>;
+  return handleResponse<Array<Polygon>>(response);
 }
 
 export function deletePolygonApi(id: string) {
