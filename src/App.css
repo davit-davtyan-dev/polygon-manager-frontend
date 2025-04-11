@@ -4,14 +4,3 @@
   padding: 2rem;
   text-align: left;
 }
-
-h1 {
-  text-align: center;
-}
-
-.loader-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50%;
-}

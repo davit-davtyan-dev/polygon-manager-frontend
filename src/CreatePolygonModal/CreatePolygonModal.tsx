@@ -1,63 +1,30 @@
-import { useState } from "react";
 import Modal from "../components/Modal";
 import Loader from "../components/Loader";
 import PolygonCanvas from "../PolygonCanvas/PolygonCanvas";
 import SaveIcon from "../assets/save.svg?react";
 import PlusIcon from "../assets/plus.svg?react";
+import { usePolygonContext } from "../contexts/PolygonContext";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../constants";
-import { Point, Polygon } from "../types";
 import "./CreatePolygonModal.css";
 
-type CreatePolygonModalProps = {
-  open: boolean;
-  onSave: (data: Omit<Polygon, "_id">) => Promise<void>;
-  onCancel: () => void;
-};
-
-const CreatePolygonModal = (props: CreatePolygonModalProps) => {
-  const [name, setName] = useState("");
-  const [pointsWithIds, setPointsWithIds] = useState<
-    Array<{ id: number; point: Point }>
-  >([]);
-  const [saveLoading, setSaveLoading] = useState(false);
-
-  const handlePointAdd = (newPoint: Point = [0, 0]) => {
-    setPointsWithIds((oldPoints) => [
-      ...oldPoints,
-      { id: Date.now(), point: newPoint },
-    ]);
-  };
-
-  const handlePointRemove = (id: number) => {
-    setPointsWithIds((oldValue) => oldValue.filter((item) => item.id !== id));
-  };
-
-  const handlePointEdit = (id: number, updatedValue: Point) => {
-    setPointsWithIds((oldValue) =>
-      oldValue.map((item) =>
-        item.id === id ? { id, point: updatedValue } : item
-      )
-    );
-  };
-
-  const handleCancel = () => {
-    props.onCancel();
-    setPointsWithIds([]);
-    setName("");
-  };
-
-  const handlePolygonSave = async () => {
-    setSaveLoading(true);
-    await props.onSave({ name, points });
-    setPointsWithIds([]);
-    setName("");
-    setSaveLoading(false);
-  };
+const CreatePolygonModal = () => {
+  const {
+    isCreateModalOpen,
+    newPolygonName: name,
+    setNewPolygonName: setName,
+    pointsWithIds,
+    addPoint,
+    removePoint,
+    editPoint,
+    saveLoading,
+    closeCreateModal,
+    createPolygon,
+  } = usePolygonContext();
 
   const points = pointsWithIds.map(({ point }) => point);
 
   return (
-    <Modal open={props.open}>
+    <Modal open={isCreateModalOpen}>
       <input
         placeholder="Polygon name"
         value={name}
@@ -76,40 +43,37 @@ const CreatePolygonModal = (props: CreatePolygonModalProps) => {
                 type="number"
                 value={point[0]}
                 onChange={(e) =>
-                  handlePointEdit(id, [Number(e.currentTarget.value), point[1]])
+                  editPoint(id, [Number(e.currentTarget.value), point[1]])
                 }
               />
               <input
                 type="number"
                 value={point[1]}
                 onChange={(e) =>
-                  handlePointEdit(id, [point[0], Number(e.currentTarget.value)])
+                  editPoint(id, [point[0], Number(e.currentTarget.value)])
                 }
               />
-              <button onClick={() => handlePointRemove(id)}>x</button>
+              <button onClick={() => removePoint(id)}>x</button>
             </div>
           ))}
-          <button
-            className="add-point-button"
-            onClick={() => handlePointAdd([0, 0])}
-          >
+          <button className="add-point-button" onClick={() => addPoint([0, 0])}>
             <PlusIcon width={18} height={18} />
             Add point
           </button>
         </div>
-        {props.open && (
+        {isCreateModalOpen && (
           <PolygonCanvas
             points={points}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
 
-              handlePointAdd([e.clientX - rect.left, e.clientY - rect.top]);
+              addPoint([e.clientX - rect.left, e.clientY - rect.top]);
             }}
           />
         )}
       </div>
       <div className="create-modal-actions-container">
-        <button onClick={handlePolygonSave} className="save-polygon-button">
+        <button onClick={createPolygon} className="save-polygon-button">
           {saveLoading ? (
             <Loader size={18} />
           ) : (
@@ -117,7 +81,7 @@ const CreatePolygonModal = (props: CreatePolygonModalProps) => {
           )}
           Save
         </button>
-        <button onClick={handleCancel}>Cancel</button>
+        <button onClick={closeCreateModal}>Cancel</button>
       </div>
     </Modal>
   );

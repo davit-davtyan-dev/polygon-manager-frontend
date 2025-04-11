@@ -1,4 +1,4 @@
-export async function handleResponse<D = any>(response: Response) {
+export async function handleResponse<D>(response: Response) {
   if (!response.ok) {
     let errorMessage = "An unexpected error occurred";
     try {
