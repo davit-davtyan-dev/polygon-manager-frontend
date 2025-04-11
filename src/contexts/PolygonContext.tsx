@@ -12,27 +12,27 @@ import {
   deletePolygonApi,
   fetchPolygonsApi,
 } from "../api/polygonApi";
-import { Point, Polygon } from "../types";
+import { DeleteButtonRect, Mode, Point, Polygon } from "../types";
 
 type PolygonContextType = {
   polygons: Array<Polygon>;
   fetchLoading: boolean;
   createPolygon: () => Promise<void>;
   deletePolygon: () => Promise<void>;
-  isCreateModalOpen: boolean;
-  openCreateModal: () => void;
-  closeCreateModal: () => void;
   polygonToDelete: Polygon | null;
   selectPolygonToDelete: (polygon: Polygon) => void;
   closeDeleteModal: () => void;
   deleteLoading: boolean;
   newPolygonName: string;
   setNewPolygonName: (value: string) => void;
-  pointsWithIds: Array<{ id: number; point: Point }>;
   saveLoading: boolean;
-  addPoint: (newPoint?: Point) => void;
-  removePoint: (id: number) => void;
-  editPoint: (id: number, updatedValue: Point) => void;
+  addPoint: (newPoint: Point) => void;
+  revertLatestPoint: () => void;
+  newPoints: Array<Point>;
+  deleteButtons: Array<DeleteButtonRect>;
+  setDeleteButtons: (value: Array<DeleteButtonRect>) => void;
+  mode: Mode;
+  setMode: (value: Mode) => void;
 };
 
 const PolygonContext = createContext<PolygonContextType | undefined>(undefined);
@@ -40,17 +40,21 @@ const PolygonContext = createContext<PolygonContextType | undefined>(undefined);
 export const PolygonProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [mode, setMode] = useState<PolygonContextType["mode"]>(Mode.create);
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [polygons, setPolygons] = useState<Array<Polygon>>([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [polygonToDelete, setPolygonToDelete] = useState<Polygon | null>(null);
+  const [polygons, setPolygons] = useState<PolygonContextType["polygons"]>([]);
+  const [polygonToDelete, setPolygonToDelete] =
+    useState<PolygonContextType["polygonToDelete"]>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [newPolygonName, setNewPolygonName] = useState("");
-  const [pointsWithIds, setPointsWithIds] = useState<
-    Array<{ id: number; point: Point }>
-  >([]);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [newPoints, setNewPoints] = useState<PolygonContextType["newPoints"]>(
+    []
+  );
+  const [deleteButtons, setDeleteButtons] = useState<
+    PolygonContextType["deleteButtons"]
+  >([]);
 
   const createPolygon = useCallback<
     PolygonContextType["createPolygon"]
@@ -59,13 +63,12 @@ export const PolygonProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const newPolygon = await createPolygonApi({
         name: newPolygonName,
-        points: pointsWithIds.map((item) => item.point),
+        points: newPoints,
       });
 
       setPolygons((oldValue) => [...oldValue, newPolygon]);
-      setIsCreateModalOpen(false);
       toast.success("New polygon created!", { autoClose: 2500 });
-      setPointsWithIds([]);
+      setNewPoints([]);
       setNewPolygonName("");
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -73,7 +76,7 @@ export const PolygonProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
     setSaveLoading(false);
-  }, [newPolygonName, pointsWithIds]);
+  }, [newPolygonName, newPoints]);
 
   const closeDeleteModal = useCallback(() => setPolygonToDelete(null), []);
 
@@ -97,30 +100,11 @@ export const PolygonProvider: React.FC<{ children: React.ReactNode }> = ({
     setDeleteLoading(false);
   }, [polygonToDelete, closeDeleteModal]);
 
-  const addPoint = useCallback<PolygonContextType["addPoint"]>(
-    (newPoint = [0, 0]) => {
-      setPointsWithIds((oldPoints) => [
-        ...oldPoints,
-        { id: Date.now(), point: newPoint },
-      ]);
-    },
-    []
-  );
-
-  const removePoint = useCallback<PolygonContextType["removePoint"]>((id) => {
-    setPointsWithIds((oldValue) => oldValue.filter((item) => item.id !== id));
+  const addPoint = useCallback<PolygonContextType["addPoint"]>((newPoint) => {
+    setNewPoints((oldPoints) => {
+      return [...oldPoints, newPoint];
+    });
   }, []);
-
-  const editPoint = useCallback<PolygonContextType["editPoint"]>(
-    (id, updatedValue) => {
-      setPointsWithIds((oldValue) =>
-        oldValue.map((item) =>
-          item.id === id ? { id, point: updatedValue } : item
-        )
-      );
-    },
-    []
-  );
 
   useEffect(() => {
     setFetchLoading(true);
@@ -129,46 +113,46 @@ export const PolygonProvider: React.FC<{ children: React.ReactNode }> = ({
       .finally(() => setFetchLoading(false));
   }, []);
 
-  const value = useMemo(
+  const value = useMemo<PolygonContextType>(
     () => ({
       polygons,
       fetchLoading,
       createPolygon,
       deletePolygon,
-      isCreateModalOpen,
-      openCreateModal: () => setIsCreateModalOpen(true),
-      closeCreateModal: () => {
-        setIsCreateModalOpen(false);
-        setPointsWithIds([]);
-        setNewPolygonName("");
-      },
       polygonToDelete,
       selectPolygonToDelete: setPolygonToDelete,
       closeDeleteModal,
       deleteLoading,
       newPolygonName,
       setNewPolygonName,
-      pointsWithIds,
+      newPoints,
       saveLoading,
       addPoint,
-      removePoint,
-      editPoint,
+      deleteButtons,
+      setDeleteButtons,
+      mode,
+      setMode,
+      revertLatestPoint: () =>
+        setNewPoints((oldValue) => {
+          const newValue = [...oldValue];
+          newValue.pop();
+          return newValue;
+        }),
     }),
     [
       polygons,
       fetchLoading,
       createPolygon,
       deletePolygon,
-      isCreateModalOpen,
       polygonToDelete,
       closeDeleteModal,
       deleteLoading,
       newPolygonName,
-      pointsWithIds,
+      newPoints,
       saveLoading,
       addPoint,
-      removePoint,
-      editPoint,
+      deleteButtons,
+      mode,
     ]
   );
 

@@ -5,3 +5,20 @@ export type Polygon = {
   name: string;
   points: Array<Point>;
 };
+
+export type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type DeleteButtonRect = {
+  id: string;
+  rect: Rect;
+};
+
+export enum Mode {
+  create = "create",
+  delete = "delete",
+}
