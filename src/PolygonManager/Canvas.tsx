@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { DeleteButtonRect, Mode, Point } from "../types";
 import { usePolygonContext } from "../contexts/PolygonContext";
 import { draw, drawDeleteButton, isInsideRect } from "./polygonHelpers";
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../constants";
+import {
+  BACKGROUND_IMAGE_URL,
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+} from "../constants";
 
 export default function Canvas() {
   const {
@@ -24,7 +28,7 @@ export default function Canvas() {
       return;
     }
     const background = new Image();
-    background.src = `https://picsum.photos/${CANVAS_WIDTH}/${CANVAS_HEIGHT}`;
+    background.src = BACKGROUND_IMAGE_URL;
 
     backgroundRef.current = background;
     background.onload = function () {
@@ -73,32 +77,36 @@ export default function Canvas() {
     setDeleteButtons,
   ]);
 
+  const handleCanvasClick = (
+    e: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) => {
+    if (!backgroundLoaded) {
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const point: Point = [e.clientX - rect.left, e.clientY - rect.top];
+
+    if (mode === Mode.delete) {
+      const clickedButton = deleteButtons.find((item) =>
+        isInsideRect(point, item.rect)
+      );
+
+      const polygon = polygons.find((p) => p._id === clickedButton?.id);
+      if (polygon) {
+        selectPolygonToDelete(polygon);
+      }
+      return;
+    }
+
+    addPoint(point);
+  };
+
   return (
     <canvas
       ref={ref}
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
-      onClick={(e) => {
-        if (!backgroundLoaded) {
-          return;
-        }
-        const rect = e.currentTarget.getBoundingClientRect();
-        const point: Point = [e.clientX - rect.left, e.clientY - rect.top];
-
-        if (mode === Mode.delete) {
-          const clickedButton = deleteButtons.find((item) =>
-            isInsideRect(point, item.rect)
-          );
-
-          const polygon = polygons.find((p) => p._id === clickedButton?.id);
-          if (polygon) {
-            selectPolygonToDelete(polygon);
-          }
-          return;
-        }
-
-        addPoint(point);
-      }}
+      onClick={handleCanvasClick}
     />
   );
 }
